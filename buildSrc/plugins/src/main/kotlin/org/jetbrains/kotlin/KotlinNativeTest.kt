@@ -291,11 +291,19 @@ open class KonanStandaloneTest : KonanLocalTest() {
     @Optional
     var enableKonanAssertions = true
 
+    private var _flags: MutableList<String> = mutableListOf()
     /**
      * Compiler flags used to build a test.
      */
-    @Optional
-    var flags: MutableList<String> = if (enableKonanAssertions) mutableListOf("-ea") else mutableListOf()
+    var flags: MutableList<String>
+        get() {
+                if (enableKonanAssertions) _flags.add("-ea")
+                return _flags
+            }
+        @Optional
+        set(value) {
+            _flags = value
+        }
 
     fun getSources() = buildCompileList(outputDirectory)
 }
