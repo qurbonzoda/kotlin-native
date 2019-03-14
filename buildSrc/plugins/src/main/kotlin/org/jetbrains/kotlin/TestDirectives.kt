@@ -46,6 +46,7 @@ fun KonanTest.buildCompileList(outputDirectory: String): List<String> {
             if (!nextFileExists) break
         }
     }
+    println(result)
     return result
 }
 

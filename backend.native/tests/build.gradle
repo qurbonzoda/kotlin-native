@@ -3021,13 +3021,28 @@ Task interopTest(String name, Closure<KonanInteropTest> configureClosure) {
                 def conf = project.kotlinNativeInterop[task.interop]
                 def lib = conf.name + name
                 interop(lib, targets: [target.name ?: 'host']) {
-                    // FIXME: creates empty file to workaround konan gradle plugin issue (should be able to have no def file)
-                    defFile((conf.defFile != null) ? conf.defFile : File.createTempFile("${conf.name}.empty", ".def"))
-                    if (conf.headers != null) headers(conf.headers)
+                    defFile((conf.defFile != null)
+                            ? conf.defFile
+                            // FIXME: creates empty file to workaround konan gradle plugin issue (should be able to have no def file)
+                            : File.createTempFile("${conf.name}.empty", ".def"))
+
+                    // FIXME: this option doesn't work due to an issue in plugin: it tries to resolve header in project dir.
+//                    if (conf.headers != null) headers(conf.headers)
+                    // FIXME: remove this when fixed
+                    if (conf.headers != null) {
+                        def f = File.createTempFile("${conf.name}.empty", ".def")
+                        f.write("headers = ${conf.headers}")
+                        defFile(f)
+                    }
+
                     if (conf.pkg != null) packageName(conf.pkg)
                     baseDir "$testOutputLocal/$name"
                 }
                 UtilsKt.setDistDependencyFor(project, "compileKonan${lib.capitalize()}${target.name.capitalize()}")
+
+                def t = project.tasks.getByName("compileKonan${lib.capitalize()}${target.name.capitalize()}")
+                println("HEADERS: ${t.headers}")
+                println("ARGS: ${t.buildArgs()}")
 
                 program(name, targets: [target.name ?: 'host']) {
                     libraries {
@@ -3244,7 +3259,7 @@ standaloneTest("library_mismatch") {
     def currentTarget = project.target.name
     def someOtherTarget = (project.testTarget == 'wasm32' ? project.hostName : 'wasm32')
 
-    // FIXME: is this correct? When there are no custom dist depend on crossDist making sanity task
+    // FIXME: is this correct? If there are no custom dist, it depends on crossDist making sanity task run longer
     if (!useCustomDist) {
         dependsOn ':wasm32CrossDistRuntime' // we actually need any target other than the current one.
     }
@@ -3364,7 +3379,7 @@ standaloneTest("coverage_basic_library") {
 
     def dir = buildDir.absolutePath
 
-    doFirst {
+    doBefore {
         def konancScript = isWindows() ? "konanc.bat" : "konanc"
         def konanc = "$dist/bin/$konancScript"
         "$konanc $projectDir/coverage/basic/library/library.kt -p library -o $dir/lib_to_cover".execute().waitFor()
