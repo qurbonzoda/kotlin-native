@@ -3449,7 +3449,6 @@ task buildKonanTests { t ->
 
     // Local tests build into a single binary should depend on this task
     project.tasks
-            .matching { !it instanceof KonanStandaloneTest &&
-                    it instanceof KonanLocalTest }
+            .matching { !(it instanceof KonanStandaloneTest) && it instanceof KonanLocalTest }
             .forEach { it.dependsOn(t) }
 }
