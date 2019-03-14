@@ -199,7 +199,8 @@ internal val IrFunction.functionName: String
                 // So disambiguate by the name of the bridge for now.
                 // TODO: idealy we'd never generate such identical declarations.
 
-                if (this@functionName is IrSimpleFunction && this@functionName.hasObjCMethodAnnotation()) {
+                if (this@functionName is IrSimpleFunction && this@functionName.hasObjCMethodAnnotation()
+                        && this@functionName.correspondingProperty == null) {
                     this@functionName.objCMethodArgValue("selector") ?.let { append("#$it") }
                     this@functionName.objCMethodArgValue("bridge") ?.let { append("#$it") }
                 }
